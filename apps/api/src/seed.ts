@@ -99,7 +99,7 @@ async function bootstrap() {
         });
         
         await medicalRepo.save({
-          student_id: student.id,
+          student,
           blood_type: data.adm === 'ADM001' ? 'O+' : data.adm === 'ADM002' ? 'A-' : 'B+',
           allergies: data.adm === 'ADM002' ? ['Peanuts', 'Dust'] : [],
           chronic_conditions: data.adm === 'ADM006' ? ['Asthma'] : [],
