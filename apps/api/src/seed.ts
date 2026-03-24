@@ -34,37 +34,45 @@ async function bootstrap() {
     // 1. Create Comprehensive Staff Accounts
     console.log('Creating staff accounts...');
     
-    const principal = await usersService.findByEmail('principal@sychar.ac.ke').catch(() => 
-      usersService.create({ email: 'principal@sychar.ac.ke', full_name: 'Dr. James Njuguna', password: 'password123', role: UserRole.PRINCIPAL })
-    );
+    let principal = await usersService.findByEmail('principal@sychar.ac.ke');
+    if (!principal) {
+      principal = await usersService.create({ email: 'principal@sychar.ac.ke', full_name: 'Dr. James Njuguna', password: 'password123', role: UserRole.PRINCIPAL });
+    }
 
-    const deputy = await usersService.findByEmail('deputy@sychar.ac.ke').catch(() => 
-      usersService.create({ email: 'deputy@sychar.ac.ke', full_name: 'Mrs. Sarah Kemunto', password: 'password123', role: UserRole.DEPUTY_PRINCIPAL })
-    );
+    let deputy = await usersService.findByEmail('deputy@sychar.ac.ke');
+    if (!deputy) {
+      deputy = await usersService.create({ email: 'deputy@sychar.ac.ke', full_name: 'Mrs. Sarah Kemunto', password: 'password123', role: UserRole.DEPUTY_PRINCIPAL });
+    }
 
-    const hod = await usersService.findByEmail('hod.science@sychar.ac.ke').catch(() => 
-      usersService.create({ email: 'hod.science@sychar.ac.ke', full_name: 'Mr. Peter Otieno', password: 'password123', role: UserRole.HOD, department: 'Sciences' } as any)
-    );
+    let hod = await usersService.findByEmail('hod.science@sychar.ac.ke');
+    if (!hod) {
+      hod = await usersService.create({ email: 'hod.science@sychar.ac.ke', full_name: 'Mr. Peter Otieno', password: 'password123', role: UserRole.HOD, department: 'Sciences' } as any);
+    }
 
-    const teacher1 = await usersService.findByEmail('teacher1@sychar.ac.ke').catch(() => 
-      usersService.create({ email: 'teacher1@sychar.ac.ke', full_name: 'Ms. Alice Wambui', password: 'password123', role: UserRole.CLASS_TEACHER, assigned_form: Form.FORM_1, assigned_stream: Stream.A } as any)
-    );
+    let teacher1 = await usersService.findByEmail('teacher1@sychar.ac.ke');
+    if (!teacher1) {
+      teacher1 = await usersService.create({ email: 'teacher1@sychar.ac.ke', full_name: 'Ms. Alice Wambui', password: 'password123', role: UserRole.CLASS_TEACHER, assigned_form: Form.FORM_1, assigned_stream: Stream.A } as any);
+    }
 
-    const teacher2 = await usersService.findByEmail('teacher2@sychar.ac.ke').catch(() => 
-      usersService.create({ email: 'teacher2@sychar.ac.ke', full_name: 'Mr. Benson Mutua', password: 'password123', role: UserRole.CLASS_TEACHER, assigned_form: Form.FORM_2, assigned_stream: Stream.B } as any)
-    );
+    let teacher2 = await usersService.findByEmail('teacher2@sychar.ac.ke');
+    if (!teacher2) {
+      teacher2 = await usersService.create({ email: 'teacher2@sychar.ac.ke', full_name: 'Mr. Benson Mutua', password: 'password123', role: UserRole.CLASS_TEACHER, assigned_form: Form.FORM_2, assigned_stream: Stream.B } as any);
+    }
 
-    const accountant = await usersService.findByEmail('accountant@sychar.ac.ke').catch(() => 
-      usersService.create({ email: 'accountant@sychar.ac.ke', full_name: 'Mr. David Mpesa', password: 'password123', role: UserRole.ACCOUNTANT })
-    );
+    let accountant = await usersService.findByEmail('accountant@sychar.ac.ke');
+    if (!accountant) {
+      accountant = await usersService.create({ email: 'accountant@sychar.ac.ke', full_name: 'Mr. David Mpesa', password: 'password123', role: UserRole.ACCOUNTANT });
+    }
 
-    const nurse = await usersService.findByEmail('nurse@sychar.ac.ke').catch(() => 
-      usersService.create({ email: 'nurse@sychar.ac.ke', full_name: 'Sister Mary Anne', password: 'password123', role: UserRole.NURSE })
-    );
+    let nurse = await usersService.findByEmail('nurse@sychar.ac.ke');
+    if (!nurse) {
+      nurse = await usersService.create({ email: 'nurse@sychar.ac.ke', full_name: 'Sister Mary Anne', password: 'password123', role: UserRole.NURSE });
+    }
 
-    const parentUser = await usersService.findByEmail('parent@sychar.ac.ke').catch(() => 
-      usersService.create({ email: 'parent@sychar.ac.ke', full_name: 'Mr. Robert Kariuki', password: 'password123', role: UserRole.PARENT })
-    );
+    let parentUser = await usersService.findByEmail('parent@sychar.ac.ke');
+    if (!parentUser) {
+      parentUser = await usersService.create({ email: 'parent@sychar.ac.ke', full_name: 'Mr. Robert Kariuki', password: 'password123', role: UserRole.PARENT });
+    }
 
     // 2. Create Students across different forms
     console.log('Creating students...');
@@ -131,28 +139,32 @@ async function bootstrap() {
       const dateStr = date.toISOString().split('T')[0];
 
       // Form 1A
-      await attendanceService.bulkMarkAttendance({
-        date: dateStr,
-        form: Form.FORM_1,
-        stream: Stream.A,
-        entries: students.filter(s => s.form === Form.FORM_1).map(s => ({
-          studentId: s.id,
-          status: Math.random() > 0.1 ? AttendanceStatus.PRESENT : AttendanceStatus.ABSENT,
-          remarks: '',
-        })),
-      }, teacher1!);
+      if (teacher1 && teacher1.id) {
+        await attendanceService.bulkMarkAttendance({
+          date: dateStr,
+          form: Form.FORM_1,
+          stream: Stream.A,
+          entries: students.filter(s => s.form === Form.FORM_1).map(s => ({
+            studentId: s.id,
+            status: Math.random() > 0.1 ? AttendanceStatus.PRESENT : AttendanceStatus.ABSENT,
+            remarks: '',
+          })),
+        }, teacher1);
+      }
 
       // Form 2B
-      await attendanceService.bulkMarkAttendance({
-        date: dateStr,
-        form: Form.FORM_2,
-        stream: Stream.B,
-        entries: students.filter(s => s.form === Form.FORM_2).map(s => ({
-          studentId: s.id,
-          status: Math.random() > 0.1 ? AttendanceStatus.PRESENT : AttendanceStatus.ABSENT,
-          remarks: '',
-        })),
-      }, teacher2!);
+      if (teacher2 && teacher2.id) {
+        await attendanceService.bulkMarkAttendance({
+          date: dateStr,
+          form: Form.FORM_2,
+          stream: Stream.B,
+          entries: students.filter(s => s.form === Form.FORM_2).map(s => ({
+            studentId: s.id,
+            status: Math.random() > 0.1 ? AttendanceStatus.PRESENT : AttendanceStatus.ABSENT,
+            remarks: '',
+          })),
+        }, teacher2);
+      }
     }
 
     // 5. Create Diverse Discipline Incidents
@@ -168,21 +180,23 @@ async function bootstrap() {
     ];
 
     for (const inc of incidents) {
-      console.log(`Reporting incident for ${inc.s.full_name}...`);
-      const incident = await disciplineService.reportIncident({
-        studentId: inc.s.id,
-        incident_type: inc.type,
-        severity: inc.sev,
-        description: inc.desc,
-        incident_date: today,
-      }, teacher1!);
-
-      if (inc.status !== IncidentStatus.OPEN && teacher1 && teacher1.id) {
-        console.log(`Updating incident status to ${inc.status}...`);
-        await disciplineService.updateIncident(incident.id, {
-          status: inc.status,
-          action_taken: 'Parent notified and session held.',
+      if (inc.s && teacher1 && teacher1.id) {
+        console.log(`Reporting incident for ${inc.s.full_name}...`);
+        const incident = await disciplineService.reportIncident({
+          studentId: inc.s.id,
+          incident_type: inc.type,
+          severity: inc.sev,
+          description: inc.desc,
+          incident_date: today,
         }, teacher1);
+
+        if (inc.status !== IncidentStatus.OPEN) {
+          console.log(`Updating incident status to ${inc.status}...`);
+          await disciplineService.updateIncident(incident.id, {
+            status: inc.status,
+            action_taken: 'Parent notified and session held.',
+          }, teacher1);
+        }
       }
     }
 
