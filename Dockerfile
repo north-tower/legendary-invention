@@ -31,7 +31,7 @@ COPY --from=builder /app/tsconfig*.json ./
 ENV NODE_ENV=production
 
 # Expose the application port
-EXPOSE 6900
+EXPOSE 6901
 
 # Start the application
 CMD ["npm", "run", "start:prod"]

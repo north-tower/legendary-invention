@@ -21,10 +21,10 @@ services:
     container_name: sychar-backend
     restart: always
     ports:
-      - "6900:6900"
+      - "6901:6901"
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_password}@db:5432/${POSTGRES_DB:-sychar_db}?sslmode=disable
-      PORT: 6900
+      PORT: 6901
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       JWT_SECRET: ${JWT_SECRET:-your_super_secret_jwt_key}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your_super_secret_refresh_key}

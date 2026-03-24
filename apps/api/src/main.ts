@@ -41,7 +41,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  const port = configService.get<number>('app.port') || 6900;
+  const port = configService.get<number>('app.port') || 6901;
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}/api/v1`);
   console.log(`Swagger documentation: http://localhost:${port}/api/docs`);

@@ -94,7 +94,7 @@ Build and start the backend and database containers:
 docker compose up -d --build
 ```
 
-The backend will be available at `http://localhost:6900/api/v1`.
+The backend will be available at `http://localhost:6901/api/v1`.
 
 ### 3. Database Migrations
 Apply the database schema to the running container:
