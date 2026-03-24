@@ -9,6 +9,9 @@ import { UsersModule } from './users/users.module';
 import { StudentsModule } from './students/students.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { DisciplineModule } from './discipline/discipline.module';
+import { FinanceModule } from './finance/finance.module';
+import { MpesaModule } from './mpesa/mpesa.module';
+import { CommsModule } from './comms/comms.module';
 
 @Module({
   imports: [
@@ -32,6 +35,9 @@ import { DisciplineModule } from './discipline/discipline.module';
     StudentsModule,
     AttendanceModule,
     DisciplineModule,
+    FinanceModule,
+    MpesaModule,
+    CommsModule,
   ],
   providers: [
     {

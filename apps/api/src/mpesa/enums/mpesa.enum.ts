@@ -1,0 +1,7 @@
+export enum MpesaStatus {
+  INITIATED = 'INITIATED',
+  SUCCESS = 'SUCCESS',
+  FAILED = 'FAILED',
+  TIMEOUT = 'TIMEOUT',
+  CANCELLED = 'CANCELLED',
+}
