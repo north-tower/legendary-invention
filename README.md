@@ -89,12 +89,12 @@ cp .env.example .env
 ```
 
 ### 2. Launch Services
-Build and start the backend and database containers:
+Build and start the backend, frontend, and database containers:
 ```bash
 docker compose up -d --build
 ```
 
-The backend will be available at `http://localhost:6901/api/v1`.
+The backend will be available at `http://localhost:6901/api/v1` and the frontend at `http://localhost:7000`.
 
 ### 3. Database Migrations
 Apply the database schema to the running container:
