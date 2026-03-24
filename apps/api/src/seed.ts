@@ -115,8 +115,12 @@ async function bootstrap() {
 
     // 3. Link Parent to 2 Students
     console.log('Linking parent to students...');
-    await studentsService.linkParent(students[0].admission_number, parentUser!.id);
-    await studentsService.linkParent(students[5].admission_number, parentUser!.id);
+    if (parentUser && parentUser.id) {
+      await studentsService.linkParent(students[0].admission_number, parentUser.id);
+      await studentsService.linkParent(students[5].admission_number, parentUser.id);
+    } else {
+      console.warn('Parent user not found, skipping linking.');
+    }
 
     // 4. Create Historical Attendance (Last 5 Days)
     console.log('Seeding historical attendance...');
@@ -173,59 +177,67 @@ async function bootstrap() {
         incident_date: today,
       }, teacher1!);
 
-      if (inc.status !== IncidentStatus.OPEN) {
+      if (inc.status !== IncidentStatus.OPEN && teacher1 && teacher1.id) {
         console.log(`Updating incident status to ${inc.status}...`);
         await disciplineService.updateIncident(incident.id, {
           status: inc.status,
-          action_taken: 'Parent notified and session conducted.',
-        }, deputy!);
+          action_taken: 'Parent notified and session held.',
+        }, teacher1);
       }
     }
 
     // 6. Create Robust Finance Data
     console.log('Seeding finance data...');
     const structures = [];
-    for (const f of Object.values(Form)) {
-      let fs = await financeService.getFeeStructures(f, Term.TERM_1, '2026');
-      let structure;
-      if (fs.length > 0) {
-        structure = fs[0];
-      } else {
-        structure = await financeService.createFeeStructure({
-          form: f,
-          academic_year: '2026',
-          term: Term.TERM_1,
-          total_amount: f === Form.FORM_1 ? 45000 : 38000,
-          is_active: true,
-        }, principal!);
+    if (principal && principal.id) {
+      for (const f of Object.values(Form)) {
+        let fs = await financeService.getFeeStructures(f, Term.TERM_1, '2026');
+        let structure;
+        if (fs.length > 0) {
+          structure = fs[0];
+        } else {
+          structure = await financeService.createFeeStructure({
+            form: f,
+            academic_year: '2026',
+            term: Term.TERM_1,
+            total_amount: f === Form.FORM_1 ? 45000 : 38000,
+            is_active: true,
+          }, principal);
+        }
+        structures.push(structure);
       }
-      structures.push(structure);
     }
 
     // Diverse Payments
     // Student 0: Partial Bank Transfer
-    try {
-      await financeService.recordManualPayment({
-        studentId: students[0].id, feeStructureId: structures[0].id, amount: 20000,
-        payment_method: PaymentMethod.BANK_TRANSFER, transaction_date: today, notes: 'Part 1'
-      }, accountant!);
-    } catch (e) { console.log('Payment 1 already exists or failed'); }
+    if (accountant && accountant.id && students[0] && structures[0]) {
+      try {
+        await financeService.recordManualPayment({
+          studentId: students[0].id, feeStructureId: structures[0].id, amount: 20000,
+          payment_method: PaymentMethod.BANK_TRANSFER, transaction_date: today, notes: 'Part 1'
+        }, accountant);
+      } catch (e) { console.log('Payment 1 already exists or failed'); }
+    }
 
     // Student 1: Full M-Pesa
-    try {
-      await financeService.recordManualPayment({
-        studentId: students[1].id, feeStructureId: structures[0].id, amount: 45000,
-        payment_method: PaymentMethod.MPESA, mpesa_receipt: 'QHX4KL2M3N', transaction_date: today
-      }, accountant!);
-    } catch (e) { console.log('Payment 2 already exists or failed'); }
+    if (accountant && accountant.id && students[1] && structures[0]) {
+      try {
+        await financeService.recordManualPayment({
+          studentId: students[1].id, feeStructureId: structures[0].id, amount: 45000,
+          payment_method: PaymentMethod.MPESA, mpesa_receipt: 'QHX4KL2M3N', transaction_date: today
+        }, accountant);
+      } catch (e) { console.log('Payment 2 already exists or failed'); }
+    }
 
     // Student 5: Small Cash Payment (High Deficit)
-    try {
-      await financeService.recordManualPayment({
-        studentId: students[5].id, feeStructureId: structures[1].id, amount: 5000,
-        payment_method: PaymentMethod.CASH, transaction_date: today
-      }, accountant!);
-    } catch (e) { console.log('Payment 3 already exists or failed'); }
+    if (accountant && accountant.id && students[5] && structures[1]) {
+      try {
+        await financeService.recordManualPayment({
+          studentId: students[5].id, feeStructureId: structures[1].id, amount: 5000,
+          payment_method: PaymentMethod.CASH, transaction_date: today
+        }, accountant);
+      } catch (e) { console.log('Payment 3 already exists or failed'); }
+    }
 
     // 7. Create Communications Data
     console.log('Seeding communication messages...');
@@ -237,16 +249,18 @@ async function bootstrap() {
     ];
 
     for (const msg of parentMsgs) {
-      const sent = await commsService.sendMessage(msg, parentUser!);
-      
-      // Reply to one message
-      if (msg.priority === MessagePriority.ACADEMIC) {
-        await commsService.sendMessage({
-          subject: `Re: ${msg.subject}`,
-          body: 'We can schedule a meeting this Friday at 4 PM. Please confirm.',
-          priority: MessagePriority.ACADEMIC,
-          recipientId: parentUser!.id
-        }, principal!);
+      if (parentUser && parentUser.id) {
+        const sent = await commsService.sendMessage(msg, parentUser);
+        
+        // Reply to one message
+        if (msg.priority === MessagePriority.ACADEMIC && principal && principal.id) {
+          await commsService.sendMessage({
+            subject: `Re: ${msg.subject}`,
+            body: 'We can schedule a meeting this Friday at 4 PM. Please confirm.',
+            priority: MessagePriority.ACADEMIC,
+            recipientId: parentUser.id
+          }, principal);
+        }
       }
     }
 
