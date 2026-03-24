@@ -80,6 +80,32 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 - Website - [https://nestjs.com](https://nestjs.com/)
 - Twitter - [@nestframework](https://twitter.com/nestframework)
 
+## Docker Deployment
+
+### 1. Configure Environment
+Copy the example environment file and update your secrets:
+```bash
+cp .env.example .env
+```
+
+### 2. Launch Services
+Build and start the backend and database containers:
+```bash
+docker compose up -d --build
+```
+
+### 3. Database Migrations
+Apply the database schema to the running container:
+```bash
+docker compose exec backend npm run migration:run
+```
+
+### 4. Seeding Data
+To populate the database with "Robust Seed" data for testing:
+```bash
+docker compose exec backend npm run seed
+```
+
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
