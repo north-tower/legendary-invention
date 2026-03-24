@@ -20,7 +20,7 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy the built application and necessary source files for seeding/migrations
+# Copy the built application
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
