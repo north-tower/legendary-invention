@@ -164,6 +164,7 @@ async function bootstrap() {
     ];
 
     for (const inc of incidents) {
+      console.log(`Reporting incident for ${inc.s.full_name}...`);
       const incident = await disciplineService.reportIncident({
         studentId: inc.s.id,
         incident_type: inc.type,
@@ -173,6 +174,7 @@ async function bootstrap() {
       }, teacher1!);
 
       if (inc.status !== IncidentStatus.OPEN) {
+        console.log(`Updating incident status to ${inc.status}...`);
         await disciplineService.updateIncident(incident.id, {
           status: inc.status,
           action_taken: 'Parent notified and session conducted.',
@@ -184,34 +186,46 @@ async function bootstrap() {
     console.log('Seeding finance data...');
     const structures = [];
     for (const f of Object.values(Form)) {
-      const fs = await financeService.createFeeStructure({
-        form: f,
-        academic_year: '2026',
-        term: Term.TERM_1,
-        total_amount: f === Form.FORM_1 ? 45000 : 38000,
-        is_active: true,
-      }, principal!);
-      structures.push(fs);
+      let fs = await financeService.getFeeStructures(f, Term.TERM_1, '2026');
+      let structure;
+      if (fs.length > 0) {
+        structure = fs[0];
+      } else {
+        structure = await financeService.createFeeStructure({
+          form: f,
+          academic_year: '2026',
+          term: Term.TERM_1,
+          total_amount: f === Form.FORM_1 ? 45000 : 38000,
+          is_active: true,
+        }, principal!);
+      }
+      structures.push(structure);
     }
 
     // Diverse Payments
     // Student 0: Partial Bank Transfer
-    await financeService.recordManualPayment({
-      studentId: students[0].id, feeStructureId: structures[0].id, amount: 20000,
-      payment_method: PaymentMethod.BANK_TRANSFER, transaction_date: today, notes: 'Part 1'
-    }, accountant!);
+    try {
+      await financeService.recordManualPayment({
+        studentId: students[0].id, feeStructureId: structures[0].id, amount: 20000,
+        payment_method: PaymentMethod.BANK_TRANSFER, transaction_date: today, notes: 'Part 1'
+      }, accountant!);
+    } catch (e) { console.log('Payment 1 already exists or failed'); }
 
     // Student 1: Full M-Pesa
-    await financeService.recordManualPayment({
-      studentId: students[1].id, feeStructureId: structures[0].id, amount: 45000,
-      payment_method: PaymentMethod.MPESA, mpesa_receipt: 'QHX4KL2M3N', transaction_date: today
-    }, accountant!);
+    try {
+      await financeService.recordManualPayment({
+        studentId: students[1].id, feeStructureId: structures[0].id, amount: 45000,
+        payment_method: PaymentMethod.MPESA, mpesa_receipt: 'QHX4KL2M3N', transaction_date: today
+      }, accountant!);
+    } catch (e) { console.log('Payment 2 already exists or failed'); }
 
     // Student 5: Small Cash Payment (High Deficit)
-    await financeService.recordManualPayment({
-      studentId: students[5].id, feeStructureId: structures[1].id, amount: 5000,
-      payment_method: PaymentMethod.CASH, transaction_date: today
-    }, accountant!);
+    try {
+      await financeService.recordManualPayment({
+        studentId: students[5].id, feeStructureId: structures[1].id, amount: 5000,
+        payment_method: PaymentMethod.CASH, transaction_date: today
+      }, accountant!);
+    } catch (e) { console.log('Payment 3 already exists or failed'); }
 
     // 7. Create Communications Data
     console.log('Seeding communication messages...');

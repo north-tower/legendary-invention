@@ -113,6 +113,7 @@ export class DisciplineService {
       incident.reviewed_by = reviewer;
       return await this.incidentRepository.save(incident);
     } catch (error) {
+      console.error('Error in updateIncident:', error);
       if (error instanceof NotFoundException) throw error;
       throw new InternalServerErrorException('Error updating incident');
     }

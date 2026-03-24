@@ -75,7 +75,8 @@ export class StudentsService {
       }
 
       if (student.parent) {
-        throw new ConflictException('This student is already linked to a parent account');
+        if (student.parent.id === parentId) return student;
+        throw new ConflictException('This student is already linked to another parent account');
       }
 
       student.parent = await this.usersService.findById(parentId);
