@@ -34,11 +34,11 @@ export class CommsController {
   }
 
   @Get('inbox')
-  @Roles(UserRole.PRINCIPAL, UserRole.DEPUTY_PRINCIPAL, UserRole.HOD, UserRole.ACCOUNTANT)
+  @Roles(UserRole.PRINCIPAL, UserRole.DEPUTY_PRINCIPAL, UserRole.HOD, UserRole.ACCOUNTANT, UserRole.PARENT)
   @ApiOperation({ summary: 'Get school inbox' })
   @ApiQuery({ name: 'label', enum: TriageLabel, required: false })
-  getInbox(@Query('label') label?: TriageLabel) {
-    return this.commsService.getInbox(label);
+  getInbox(@CurrentUser() user: User, @Query('label') label?: TriageLabel) {
+    return this.commsService.getInbox(user, label);
   }
 
   @Patch(':id/read')
@@ -46,5 +46,12 @@ export class CommsController {
   @ApiOperation({ summary: 'Mark message as read' })
   markAsRead(@Param('id') id: string) {
     return this.commsService.markAsRead(id);
+  }
+
+  @Get(':id')
+  @Roles(UserRole.PRINCIPAL, UserRole.DEPUTY_PRINCIPAL, UserRole.HOD, UserRole.ACCOUNTANT, UserRole.PARENT)
+  @ApiOperation({ summary: 'Get message by ID' })
+  findOne(@Param('id') id: string) {
+    return this.commsService.findOne(id);
   }
 }

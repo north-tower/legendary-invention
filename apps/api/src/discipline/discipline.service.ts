@@ -130,14 +130,15 @@ export class DisciplineService {
     }
   }
 
-  async getIncidentsByClass(form: Form, stream: Stream, filters?: { status?: IncidentStatus; severity?: Severity; from?: string; to?: string }): Promise<DisciplineIncident[]> {
+  async getIncidentsByClass(form?: Form, stream?: Stream, filters?: { status?: IncidentStatus; severity?: Severity; from?: string; to?: string }): Promise<DisciplineIncident[]> {
     try {
       const query = this.incidentRepository.createQueryBuilder('incident')
         .leftJoinAndSelect('incident.student', 'student')
-        .leftJoinAndSelect('incident.reported_by', 'reported_by')
-        .where('student.form = :form', { form })
-        .andWhere('student.stream = :stream', { stream });
+        .leftJoinAndSelect('incident.reported_by', 'reported_by');
 
+      if (form) query.andWhere('student.form = :form', { form });
+      if (stream) query.andWhere('student.stream = :stream', { stream });
+      
       if (filters?.status) query.andWhere('incident.status = :status', { status: filters.status });
       if (filters?.severity) query.andWhere('incident.severity = :severity', { severity: filters.severity });
       if (filters?.from && filters?.to) {

@@ -22,4 +22,9 @@ export class SendMessageDto {
   @IsEnum(MessagePriority)
   @IsOptional()
   priority?: MessagePriority;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  recipientId?: string;
 }

@@ -55,15 +55,15 @@ export class DisciplineController {
   @Get('class')
   @Roles(UserRole.CLASS_TEACHER, UserRole.HOD, UserRole.DEPUTY_PRINCIPAL, UserRole.PRINCIPAL)
   @ApiOperation({ summary: 'Get incidents by class' })
-  @ApiQuery({ name: 'form', enum: Form })
-  @ApiQuery({ name: 'stream', enum: Stream })
+  @ApiQuery({ name: 'form', enum: Form, required: false })
+  @ApiQuery({ name: 'stream', enum: Stream, required: false })
   @ApiQuery({ name: 'status', enum: IncidentStatus, required: false })
   @ApiQuery({ name: 'severity', enum: Severity, required: false })
   @ApiQuery({ name: 'from', required: false })
   @ApiQuery({ name: 'to', required: false })
   getIncidentsByClass(
-    @Query('form') form: Form,
-    @Query('stream') stream: Stream,
+    @Query('form') form?: Form,
+    @Query('stream') stream?: Stream,
     @Query('status') status?: any,
     @Query('severity') severity?: any,
     @Query('from') from?: string,

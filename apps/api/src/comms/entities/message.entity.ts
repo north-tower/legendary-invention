@@ -20,6 +20,10 @@ export class Message {
   @JoinColumn({ name: 'sender_id' })
   sender: User;
 
+  @ManyToOne(() => User, { nullable: true })
+  @JoinColumn({ name: 'recipient_id' })
+  recipient: User | null;
+
   @ApiProperty()
   @Column()
   subject: string;

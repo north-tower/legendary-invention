@@ -40,7 +40,7 @@ export class StudentsService {
     }
   }
 
-  async findAll(form?: Form, stream?: Stream): Promise<Student[]> {
+  async findAll(form?: Form, stream?: Stream, parentId?: string): Promise<Student[]> {
     try {
       const query = this.studentRepository.createQueryBuilder('student')
         .leftJoinAndSelect('student.parent', 'parent');
@@ -53,9 +53,38 @@ export class StudentsService {
         query.andWhere('student.stream = :stream', { stream });
       }
 
+      if (parentId) {
+        query.andWhere('parent.id = :parentId', { parentId });
+      }
+
       return await query.getMany();
     } catch (error) {
       throw new InternalServerErrorException();
+    }
+  }
+
+  async linkParent(admission_number: string, parentId: string): Promise<Student> {
+    try {
+      const student = await this.studentRepository.findOne({
+        where: { admission_number },
+        relations: ['parent'],
+      });
+
+      if (!student) {
+        throw new NotFoundException(`Student with admission number ${admission_number} not found`);
+      }
+
+      if (student.parent) {
+        throw new ConflictException('This student is already linked to a parent account');
+      }
+
+      student.parent = await this.usersService.findById(parentId);
+      return await this.studentRepository.save(student);
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof ConflictException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to link parent to student');
     }
   }
 

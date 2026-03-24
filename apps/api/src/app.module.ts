@@ -12,6 +12,7 @@ import { DisciplineModule } from './discipline/discipline.module';
 import { FinanceModule } from './finance/finance.module';
 import { MpesaModule } from './mpesa/mpesa.module';
 import { CommsModule } from './comms/comms.module';
+import { MedicalModule } from './medical/medical.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { CommsModule } from './comms/comms.module';
     FinanceModule,
     MpesaModule,
     CommsModule,
+    MedicalModule,
   ],
   providers: [
     {

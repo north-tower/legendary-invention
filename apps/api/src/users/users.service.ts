@@ -73,6 +73,9 @@ export class UsersService {
           'password_hash',
           'role',
           'is_active',
+          'assigned_form',
+          'assigned_stream',
+          'department',
         ],
       });
     } catch (error) {

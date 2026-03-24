@@ -21,7 +21,8 @@
     "typeorm": "typeorm-ts-node-commonjs",
     "migration:generate": "npm run typeorm migration:generate -- -d apps/api/src/data-source.ts",
     "migration:run": "npm run typeorm migration:run -- -d apps/api/src/data-source.ts",
-    "migration:revert": "npm run typeorm migration:revert -- -d apps/api/src/data-source.ts"
+    "migration:revert": "npm run typeorm migration:revert -- -d apps/api/src/data-source.ts",
+    "seed": "ts-node -r tsconfig-paths/register apps/api/src/seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",

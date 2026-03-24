@@ -35,13 +35,18 @@ export class CommsService {
   async sendMessage(dto: SendMessageDto, sender: User): Promise<Message> {
     try {
       const triageResult = await this.triageMessage(dto.body);
+      const { recipientId, ...messageData } = dto;
 
       const message = this.messageRepository.create({
-        ...dto,
+        ...messageData,
         sender,
         triage_label: triageResult.label,
         triage_confidence: triageResult.confidence,
       });
+
+      if (recipientId) {
+        message.recipient = await this.messageRepository.manager.findOne(User, { where: { id: recipientId } });
+      }
 
       return await this.messageRepository.save(message);
     } catch (error) {
@@ -49,16 +54,26 @@ export class CommsService {
     }
   }
 
-  async getInbox(label?: TriageLabel): Promise<Message[]> {
+  async getInbox(user: User, label?: TriageLabel): Promise<Message[]> {
     try {
-      const where: any = {};
-      if (label) where.triage_label = label;
+      const query = this.messageRepository.createQueryBuilder('message')
+        .leftJoinAndSelect('message.sender', 'sender')
+        .leftJoinAndSelect('message.recipient', 'recipient')
+        .orderBy('message.created_at', 'DESC');
+
+      if (user.role === 'parent') {
+        // Parents see messages they sent or received
+        query.where('sender.id = :userId OR recipient.id = :userId', { userId: user.id });
+      } else {
+        // Staff see all messages sent to school (no recipient) or explicitly to them
+        query.where('message.recipient_id IS NULL OR recipient.id = :userId', { userId: user.id });
+      }
+
+      if (label) {
+        query.andWhere('message.triage_label = :label', { label });
+      }
       
-      return await this.messageRepository.find({
-        where,
-        order: { created_at: 'DESC' },
-        relations: ['sender'],
-      });
+      return await query.getMany();
     } catch (error) {
       throw new InternalServerErrorException('Error fetching inbox');
     }
@@ -75,6 +90,20 @@ export class CommsService {
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       throw new InternalServerErrorException('Error marking message as read');
+    }
+  }
+
+  async findOne(id: string): Promise<Message> {
+    try {
+      const message = await this.messageRepository.findOne({
+        where: { id },
+        relations: ['sender'],
+      });
+      if (!message) throw new NotFoundException('Message not found');
+      return message;
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException('Error fetching message');
     }
   }
 }

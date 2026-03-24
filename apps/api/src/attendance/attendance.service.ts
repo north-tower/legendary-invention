@@ -107,7 +107,10 @@ export class AttendanceService {
       return await this.attendanceRepository.find({
         where: {
           date,
-          student: { form, stream },
+          student: {
+            form,
+            stream,
+          },
         },
         relations: ['student'],
       });

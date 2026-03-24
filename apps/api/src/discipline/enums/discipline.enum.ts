@@ -20,5 +20,5 @@ export enum IncidentStatus {
   OPEN = 'OPEN',
   UNDER_REVIEW = 'UNDER_REVIEW',
   RESOLVED = 'RESOLVED',
-  ESC_ALATED = 'ESC_ALATED',
+  ESCALATED = 'ESCALATED',
 }

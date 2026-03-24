@@ -30,6 +30,10 @@ export class CreateFeeStructureDto {
   @IsNumber()
   @IsPositive()
   total_amount: number;
+
+  @ApiProperty({ required: false, default: true })
+  @IsOptional()
+  is_active?: boolean;
 }
 
 export class RecordPaymentDto {

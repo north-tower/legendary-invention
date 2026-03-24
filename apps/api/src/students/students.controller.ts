@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Query,
+  Request,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { StudentsService } from './students.service';
@@ -31,15 +32,25 @@ export class StudentsController {
     return this.studentsService.create(createStudentDto);
   }
 
+  @Post('link-parent')
+  @Roles(UserRole.PARENT)
+  @ApiOperation({ summary: 'Link parent account to student via admission number' })
+  linkParent(@Body('admission_number') admissionNumber: string, @Request() req: any) {
+    return this.studentsService.linkParent(admissionNumber, req.user.id);
+  }
+
   @Get()
-  @ApiOperation({ summary: 'Get all students' })
+  @ApiOperation({ summary: 'Get students' })
   @ApiQuery({ name: 'form', enum: Form, required: false })
   @ApiQuery({ name: 'stream', enum: Stream, required: false })
   findAll(
+    @Request() req: any,
     @Query('form') form?: Form,
     @Query('stream') stream?: Stream,
   ) {
-    return this.studentsService.findAll(form, stream);
+    // If user is a parent, only show their children
+    const parentId = req.user.role === UserRole.PARENT ? req.user.id : undefined;
+    return this.studentsService.findAll(form, stream, parentId);
   }
 
   @Get(':id')
