@@ -24,7 +24,7 @@ services:
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_password}@db:5432/${POSTGRES_DB:-sychar_db}?sslmode=disable
       PORT: 6901
-      FRONTEND_URL: ${FRONTEND_URL:-http://51.11.182.211:7000}
+      FRONTEND_URL: ${FRONTEND_URL:-https://vigilant-computing-machine-eight.vercel.app}
       JWT_SECRET: ${JWT_SECRET:-your_super_secret_jwt_key}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your_super_secret_refresh_key}
       MPESA_ENV: sandbox
