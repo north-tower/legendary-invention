@@ -9,6 +9,7 @@ import {
   Logger,
   Post,
   Req,
+  ValidationPipe,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
@@ -34,7 +35,14 @@ export class WhatsAppController {
   @Header('Content-Type', 'application/xml')
   @SkipThrottle()
   async handleWebhook(
-    @Body() body: TwilioWebhookDto,
+    @Body(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: false,
+        transform: true,
+      }),
+    )
+    body: TwilioWebhookDto,
     @Headers('x-twilio-signature') signature: string,
     @Req() req: Request,
   ): Promise<string> {
