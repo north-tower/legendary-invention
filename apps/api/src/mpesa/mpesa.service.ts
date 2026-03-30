@@ -12,7 +12,9 @@ import { InitiateSTKPushDto } from './dto/mpesa.dto';
 import { MpesaStatus } from './enums/mpesa.enum';
 import { Student } from '../students/entities/student.entity';
 import { FinanceService } from '../finance/finance.service';
-import { PaymentMethod } from '../finance/enums/finance.enum';
+import { PaymentMethod, PaymentStatus } from '../finance/enums/finance.enum';
+import { FeePayment } from '../finance/entities/fee-payment.entity';
+import { StudentFeeAccountService } from '../finance/student-fee-account.service';
 
 @Injectable()
 export class MpesaService {
@@ -26,7 +28,10 @@ export class MpesaService {
     private readonly mpesaRepository: Repository<MpesaTransaction>,
     @InjectRepository(Student)
     private readonly studentRepository: Repository<Student>,
+    @InjectRepository(FeePayment)
+    private readonly feePaymentRepository: Repository<FeePayment>,
     private readonly financeService: FinanceService,
+    private readonly studentFeeAccountService: StudentFeeAccountService,
   ) {}
 
   private formatPhoneNumber(phone: string): string {
@@ -162,7 +167,7 @@ export class MpesaService {
       transaction.result_desc = result.ResultDesc;
       transaction.completed_at = new Date();
 
-      if (result.ResultCode === 0) {
+      if (result.ResultCode === 0 || result.ResultCode === '0') {
         transaction.status = MpesaStatus.SUCCESS;
         
         const items = result.CallbackMetadata.Item;
@@ -171,11 +176,42 @@ export class MpesaService {
           transaction.mpesa_receipt = receiptItem.Value;
         }
 
-        // Record payment in FinanceModule
-        // Note: We need feeStructureId. In a real scenario, we might store it in MpesaTransaction
-        // or determine it based on current active term. For now, we assume it's handled or we need to fetch active.
-        // This is a simplified integration.
-        
+        const existingPayment = transaction.mpesa_receipt
+          ? await this.feePaymentRepository.findOne({
+              where: { mpesa_receipt: transaction.mpesa_receipt },
+            })
+          : null;
+
+        if (!existingPayment) {
+          let accountId: string | null = null;
+          if (transaction.student) {
+            const activeStructure = await this.financeService.getCurrentActiveFeeStructureForForm(
+              transaction.student.form,
+            );
+            const account = await this.financeService.resolveOrFailAccount(
+              transaction.student.id,
+              activeStructure.id,
+            );
+            accountId = account.id;
+          }
+
+          const payment = this.feePaymentRepository.create({
+            student: transaction.student || undefined,
+            student_fee_account: accountId ? ({ id: accountId } as any) : null,
+            amount: Number(transaction.amount),
+            payment_method: PaymentMethod.MPESA,
+            mpesa_receipt: transaction.mpesa_receipt || undefined,
+            mpesa_phone: transaction.phone_number,
+            transaction_date: new Date(),
+            status: PaymentStatus.COMPLETED,
+            notes: 'Auto-recorded from M-Pesa callback',
+          });
+          await this.feePaymentRepository.save(payment);
+
+          if (accountId) {
+            await this.studentFeeAccountService.recalculateAccount(accountId);
+          }
+        }
       } else {
         transaction.status = MpesaStatus.FAILED;
       }

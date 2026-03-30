@@ -8,7 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Student } from '../../students/entities/student.entity';
-import { FeeStructure } from './fee-structure.entity';
+import { StudentFeeAccount } from './student-fee-account.entity';
 import { User } from '../../users/entities/user.entity';
 import { PaymentMethod, PaymentStatus } from '../enums/finance.enum';
 import { ApiProperty } from '@nestjs/swagger';
@@ -19,13 +19,13 @@ export class FeePayment {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Student, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Student, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn({ name: 'student_id' })
-  student: Student;
+  student: Student | null;
 
-  @ManyToOne(() => FeeStructure)
-  @JoinColumn({ name: 'fee_structure_id' })
-  fee_structure: FeeStructure;
+  @ManyToOne(() => StudentFeeAccount, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'student_fee_account_id' })
+  student_fee_account: StudentFeeAccount | null;
 
   @ApiProperty({ type: 'number' })
   @Column({ type: 'decimal', precision: 10, scale: 2 })
@@ -37,11 +37,11 @@ export class FeePayment {
 
   @ApiProperty({ required: false, uniqueItems: true })
   @Column({ nullable: true, unique: true })
-  mpesa_receipt: string;
+  mpesa_receipt: string | null;
 
   @ApiProperty({ required: false })
   @Column({ nullable: true })
-  mpesa_phone: string;
+  mpesa_phone: string | null;
 
   @ApiProperty()
   @Column({ type: 'timestamp' })
@@ -57,7 +57,7 @@ export class FeePayment {
 
   @ApiProperty({ required: false })
   @Column({ nullable: true })
-  notes: string;
+  notes: string | null;
 
   @ApiProperty()
   @CreateDateColumn()

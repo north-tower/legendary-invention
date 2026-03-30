@@ -13,7 +13,7 @@ import { CreateFeeStructureDto, RecordPaymentDto } from './dto/finance.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
-import { UserRole, Form, Stream } from '../users/enums/user-role.enum';
+import { UserRole, Form } from '../users/enums/user-role.enum';
 import { Term } from './enums/finance.enum';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
@@ -58,38 +58,5 @@ export class FinanceController {
   @ApiOperation({ summary: 'Get payments by student' })
   getPaymentsByStudent(@Param('id') studentId: string) {
     return this.financeService.getPaymentsByStudent(studentId);
-  }
-
-  @Get('balance/student/:id')
-  @Roles(UserRole.ACCOUNTANT, UserRole.PRINCIPAL, UserRole.DEPUTY_PRINCIPAL)
-  @ApiOperation({ summary: 'Get balance by student' })
-  getBalanceByStudent(@Param('id') studentId: string) {
-    return this.financeService.getBalanceByStudent(studentId);
-  }
-
-  @Get('balance/class')
-  @Roles(UserRole.ACCOUNTANT, UserRole.PRINCIPAL)
-  @ApiOperation({ summary: 'Get class balances' })
-  @ApiQuery({ name: 'form', enum: Form })
-  @ApiQuery({ name: 'stream', enum: Stream })
-  getClassBalances(
-    @Query('form') form: Form,
-    @Query('stream') stream: Stream,
-  ) {
-    return this.financeService.getClassBalances(form, stream);
-  }
-
-  @Get('trajectory')
-  @Roles(UserRole.ACCOUNTANT, UserRole.PRINCIPAL)
-  @ApiOperation({ summary: 'Get term deficit trajectory' })
-  @ApiQuery({ name: 'form', enum: Form })
-  @ApiQuery({ name: 'term', enum: Term })
-  @ApiQuery({ name: 'year' })
-  getTermDeficitTrajectory(
-    @Query('form') form: Form,
-    @Query('term') term: Term,
-    @Query('year') year: string,
-  ) {
-    return this.financeService.getTermDeficitTrajectory(form, term, year);
   }
 }

@@ -5,10 +5,11 @@ import { MpesaController } from './mpesa.controller';
 import { MpesaTransaction } from './entities/mpesa-transaction.entity';
 import { Student } from '../students/entities/student.entity';
 import { FinanceModule } from '../finance/finance.module';
+import { FeePayment } from '../finance/entities/fee-payment.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([MpesaTransaction, Student]),
+    TypeOrmModule.forFeature([MpesaTransaction, Student, FeePayment]),
     FinanceModule,
   ],
   controllers: [MpesaController],
