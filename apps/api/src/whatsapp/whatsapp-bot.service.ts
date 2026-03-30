@@ -82,8 +82,13 @@ export class WhatsAppBotService {
 
   async handleIncoming(from: string, body: string): Promise<void> {
     const normalizedPhone = this.normalizePhone(from);
+    this.logger.log(`handleIncoming from=${from} normalized=${normalizedPhone}`);
     const parent = await this.usersService.findByPhone(normalizedPhone);
+    this.logger.log(`parent lookup result=${parent ? parent.id : 'none'}`);
     const session = await this.conversationStateService.getOrCreate(from, parent);
+    this.logger.log(
+      `session id=${session.id} state=${session.state} selected_child=${session.selected_child_id || 'none'}`,
+    );
 
     if (!parent) {
       await this.twilioService.sendMessage(
@@ -94,20 +99,25 @@ export class WhatsAppBotService {
     }
 
     await this.conversationStateService.updateContext(session.id, 'user', body);
+    this.logger.log(`context updated for session=${session.id}`);
 
     try {
       if (session.state === 'awaiting_child_selection') {
+        this.logger.log(`routing to handleChildSelection session=${session.id}`);
         await this.handleChildSelection(session, parent, body);
         return;
       }
       if (session.state === 'awaiting_message_body') {
+        this.logger.log(`routing to handleMessageBody session=${session.id}`);
         await this.handleMessageBody(session, parent, body);
         return;
       }
       if (session.state === 'awaiting_payment_confirm') {
+        this.logger.log(`routing to handlePaymentConfirm session=${session.id}`);
         await this.handlePaymentConfirm(session, parent, body);
         return;
       }
+      this.logger.log(`routing to handleIdleState session=${session.id}`);
       await this.handleIdleState(session, parent, body);
     } catch (error) {
       this.logger.error('Failed to process WhatsApp message', error);
@@ -124,6 +134,7 @@ export class WhatsAppBotService {
     message: string,
   ): Promise<void> {
     const children = await this.studentsService.findByParentId(parent.id);
+    this.logger.log(`idleState parent=${parent.id} children=${children.length}`);
     if (!children.length) {
       await this.reply(session, 'I could not find linked students for your account.');
       return;
@@ -145,9 +156,11 @@ export class WhatsAppBotService {
     const childContext = await this.buildChildContext(selectedChild);
     const claude = await this.callClaude(session, childContext, message);
     const intent = this.parseIntent(claude);
+    this.logger.log(`claude intent=${intent.type} session=${session.id}`);
 
     if (intent.type === 'send_message') {
       await this.conversationStateService.updateState(session.id, 'awaiting_message_body');
+      this.logger.log(`state->awaiting_message_body session=${session.id}`);
       await this.reply(
         session,
         'Please type the message you want me to send to the Principal.',
@@ -176,6 +189,7 @@ export class WhatsAppBotService {
         phone: this.normalizePhone(parent.phone || session.phone_number),
       });
       await this.conversationStateService.updateState(session.id, 'awaiting_payment_confirm');
+      this.logger.log(`state->awaiting_payment_confirm session=${session.id} amount=${amount}`);
       await this.reply(
         session,
         `Confirm M-Pesa payment of *KES ${Math.round(amount).toLocaleString('en-KE')}* to your number ${this.normalizePhone(
@@ -203,6 +217,7 @@ export class WhatsAppBotService {
 
     await this.conversationStateService.setSelectedChild(session.id, children[index].id);
     await this.conversationStateService.updateState(session.id, 'idle');
+    this.logger.log(`child selected child=${children[index].id} session=${session.id}`);
     await this.handleIdleState(session, parent, 'Continue');
   }
 
@@ -220,6 +235,7 @@ export class WhatsAppBotService {
     };
     await this.commsService.sendMessage(dto, parent);
     await this.conversationStateService.resetSession(session.id);
+    this.logger.log(`principal message queued parent=${parent.id} session=${session.id}`);
     await this.reply(session, 'Your message has been sent to the Principal.');
   }
 
@@ -238,6 +254,7 @@ export class WhatsAppBotService {
     }
 
     if (['yes', 'ndio', 'confirm'].includes(normalized)) {
+      this.logger.log(`payment confirm YES session=${session.id} amount=${action.amount}`);
       await this.mpesaService.initiateSTKPush({
         studentId: action.studentId,
         feeStructureId: action.feeStructureId,
@@ -253,6 +270,7 @@ export class WhatsAppBotService {
     }
 
     if (['no', 'hapana', 'cancel'].includes(normalized)) {
+      this.logger.log(`payment confirm NO session=${session.id}`);
       await this.conversationStateService.resetSession(session.id);
       await this.reply(session, 'Payment cancelled.');
       return;
@@ -323,6 +341,7 @@ export class WhatsAppBotService {
         .map((block) => ('text' in block ? block.text : ''))
         .join('')
         .trim();
+      this.logger.log(`Claude raw response length=${text.length} session=${session.id}`);
 
       return this.safeParseClaude(text);
     } catch (error) {
@@ -342,12 +361,14 @@ export class WhatsAppBotService {
   private safeParseClaude(raw: string): ClaudeResponse {
     try {
       const parsed = JSON.parse(raw) as ClaudeResponse;
+      this.logger.log(`Claude JSON parsed intent=${parsed.intent || 'none'}`);
       return {
         text: parsed.text || "Sorry, I didn't understand that.",
         intent: parsed.intent || 'none',
         intent_data: parsed.intent_data || {},
       };
     } catch (_err) {
+      this.logger.warn(`Claude JSON parse failed, using fallback response`);
       return { text: "Sorry, I didn't understand that.", intent: 'none', intent_data: {} };
     }
   }

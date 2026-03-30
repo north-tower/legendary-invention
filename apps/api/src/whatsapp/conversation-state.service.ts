@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { WhatsAppSession } from './entities/whatsapp-session.entity';
@@ -6,6 +6,8 @@ import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class ConversationStateService {
+  private readonly logger = new Logger(ConversationStateService.name);
+
   constructor(
     @InjectRepository(WhatsAppSession)
     private readonly sessionRepo: Repository<WhatsAppSession>,
@@ -32,7 +34,11 @@ export class ConversationStateService {
       }
 
       session.last_active_at = new Date();
-      return await this.sessionRepo.save(session);
+      const saved = await this.sessionRepo.save(session);
+      this.logger.log(
+        `Session ready id=${saved.id} phone=${phoneNumber} parent=${saved.parent?.id || 'none'} state=${saved.state}`,
+      );
+      return saved;
     } catch (error) {
       throw new InternalServerErrorException('Failed to load WhatsApp session');
     }

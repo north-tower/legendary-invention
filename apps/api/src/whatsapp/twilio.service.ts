@@ -16,13 +16,15 @@ export class TwilioService {
 
   async sendMessage(to: string, body: string): Promise<void> {
     try {
+      this.logger.log(`Sending WhatsApp message to=${to}`);
       await this.client.messages.create({
         from: this.config.get<string>('app.twilio.whatsappNumber'),
         to,
         body: body.slice(0, 1600),
       });
+      this.logger.log(`WhatsApp message sent to=${to}`);
     } catch (error) {
-      this.logger.error('Failed to send WhatsApp message', error);
+      this.logger.error(`Failed to send WhatsApp message to=${to}`, error);
     }
   }
 

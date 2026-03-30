@@ -6,6 +6,7 @@ import {
   Header,
   Headers,
   HttpCode,
+  Logger,
   Post,
   Req,
 } from '@nestjs/common';
@@ -20,6 +21,8 @@ import { TwilioService } from './twilio.service';
 @ApiTags('WhatsApp')
 @Controller('whatsapp')
 export class WhatsAppController {
+  private readonly logger = new Logger(WhatsAppController.name);
+
   constructor(
     private readonly botService: WhatsAppBotService,
     private readonly twilioService: TwilioService,
@@ -35,19 +38,30 @@ export class WhatsAppController {
     @Headers('x-twilio-signature') signature: string,
     @Req() req: Request,
   ): Promise<string> {
+    this.logger.log(
+      `Incoming webhook From=${body?.From || 'unknown'} MessageSid=${body?.MessageSid || 'n/a'}`,
+    );
     const url = `${this.config.get<string>('app.baseUrl')}/api/v1/whatsapp/webhook`;
-    if (
-      !this.twilioService.validateSignature(
-        signature,
-        url,
-        (req.body || {}) as Record<string, string>,
-      )
-    ) {
+    const isValidSignature = this.twilioService.validateSignature(
+      signature,
+      url,
+      (req.body || {}) as Record<string, string>,
+    );
+    this.logger.log(
+      `Signature check: ${isValidSignature ? 'valid' : 'invalid'} baseUrl=${url}`,
+    );
+    if (!isValidSignature) {
+      this.logger.warn(
+        `Rejected webhook due to invalid signature From=${body?.From || 'unknown'}`,
+      );
       throw new ForbiddenException('Invalid Twilio signature');
     }
 
     this.botService.handleIncoming(body.From, body.Body).catch((err) => {
-      console.error('WhatsApp bot error:', err);
+      this.logger.error(
+        `Async bot error From=${body?.From || 'unknown'} MessageSid=${body?.MessageSid || 'n/a'}`,
+        err?.stack || err,
+      );
       this.twilioService
         .sendMessage(
           body.From,
@@ -55,6 +69,9 @@ export class WhatsAppController {
         )
         .catch(() => undefined);
     });
+    this.logger.log(
+      `Webhook accepted and bot dispatched From=${body?.From || 'unknown'} MessageSid=${body?.MessageSid || 'n/a'}`,
+    );
 
     return '<Response></Response>';
   }
