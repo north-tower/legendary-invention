@@ -50,6 +50,7 @@ export class WhatsAppController {
     const proxiedUrl = `${forwardedProto}://${forwardedHost}${req.originalUrl}`;
     const directUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
     const urlsToTry = [configuredUrl, proxiedUrl, directUrl];
+    const validateSignature = this.config.get<boolean>('app.twilio.validateSignature');
 
     const isValidSignature = urlsToTry.some((candidate) =>
       this.twilioService.validateSignature(
@@ -59,13 +60,18 @@ export class WhatsAppController {
       ),
     );
     this.logger.log(
-      `Signature check: ${isValidSignature ? 'valid' : 'invalid'} configuredUrl=${configuredUrl} proxiedUrl=${proxiedUrl} directUrl=${directUrl}`,
+      `Signature check: ${isValidSignature ? 'valid' : 'invalid'} validateSignature=${validateSignature !== false} configuredUrl=${configuredUrl} proxiedUrl=${proxiedUrl} directUrl=${directUrl} twilioAccountSid=${body?.AccountSid || 'n/a'} configuredSid=${this.config.get<string>('app.twilio.accountSid') || 'n/a'}`,
     );
-    if (!isValidSignature) {
+    if (validateSignature !== false && !isValidSignature) {
       this.logger.warn(
         `Rejected webhook due to invalid signature From=${body?.From || 'unknown'}`,
       );
       throw new ForbiddenException('Invalid Twilio signature');
+    }
+    if (validateSignature === false && !isValidSignature) {
+      this.logger.warn(
+        'TWILIO_VALIDATE_SIGNATURE=false: accepting webhook with invalid signature for debugging',
+      );
     }
 
     if (!from || !message) {
