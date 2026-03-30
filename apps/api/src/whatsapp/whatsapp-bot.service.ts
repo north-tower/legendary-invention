@@ -359,18 +359,47 @@ export class WhatsAppBotService {
   }
 
   private safeParseClaude(raw: string): ClaudeResponse {
+    const cleaned = (raw || '').trim();
+    if (!cleaned) {
+      this.logger.warn('Claude returned empty response');
+      return { text: "Sorry, I didn't understand that.", intent: 'none', intent_data: {} };
+    }
+
+    // Try direct JSON first.
     try {
-      const parsed = JSON.parse(raw) as ClaudeResponse;
+      const parsed = JSON.parse(cleaned) as ClaudeResponse;
       this.logger.log(`Claude JSON parsed intent=${parsed.intent || 'none'}`);
       return {
-        text: parsed.text || "Sorry, I didn't understand that.",
+        text: parsed.text || cleaned,
         intent: parsed.intent || 'none',
         intent_data: parsed.intent_data || {},
       };
     } catch (_err) {
-      this.logger.warn(`Claude JSON parse failed, using fallback response`);
-      return { text: "Sorry, I didn't understand that.", intent: 'none', intent_data: {} };
+      // Continue to embedded JSON parse attempt.
     }
+
+    // Claude may wrap JSON in prose or markdown fences.
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        const parsed = JSON.parse(jsonMatch[0]) as ClaudeResponse;
+        this.logger.log(`Claude embedded JSON parsed intent=${parsed.intent || 'none'}`);
+        return {
+          text: parsed.text || cleaned,
+          intent: parsed.intent || 'none',
+          intent_data: parsed.intent_data || {},
+        };
+      } catch (_err) {
+        // Continue to plain text fallback.
+      }
+    }
+
+    this.logger.warn(`Claude JSON parse failed; using plain-text fallback`);
+    return {
+      text: cleaned.slice(0, 1600),
+      intent: 'none',
+      intent_data: {},
+    };
   }
 
   private async reply(session: WhatsAppSession, text: string): Promise<void> {
