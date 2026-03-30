@@ -31,6 +31,18 @@ export class TwilioService {
   validateSignature(signature: string, url: string, params: Record<string, string>): boolean {
     const authToken = this.config.get<string>('app.twilio.authToken') || '';
     if (!signature || !authToken) return false;
-    return validateRequest(authToken, signature, url, params);
+    const normalizedParams: Record<string, string> = {};
+    Object.entries(params || {}).forEach(([key, value]) => {
+      if (typeof value === 'string') normalizedParams[key] = value;
+      else if (value === null || value === undefined) normalizedParams[key] = '';
+      else normalizedParams[key] = JSON.stringify(value);
+    });
+
+    const candidates = Array.from(new Set([url]));
+    for (const candidate of candidates) {
+      const ok = validateRequest(authToken, signature, candidate, normalizedParams);
+      if (ok) return true;
+    }
+    return false;
   }
 }

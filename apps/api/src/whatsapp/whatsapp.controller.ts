@@ -44,14 +44,22 @@ export class WhatsAppController {
     this.logger.log(
       `Incoming webhook From=${from || 'unknown'} MessageSid=${messageSid}`,
     );
-    const url = `${this.config.get<string>('app.baseUrl')}/api/v1/whatsapp/webhook`;
-    const isValidSignature = this.twilioService.validateSignature(
-      signature,
-      url,
-      (req.body || {}) as Record<string, string>,
+    const configuredUrl = `${this.config.get<string>('app.baseUrl')}/api/v1/whatsapp/webhook`;
+    const forwardedProto = (req.headers['x-forwarded-proto'] as string) || 'https';
+    const forwardedHost = (req.headers['x-forwarded-host'] as string) || req.headers.host || '';
+    const proxiedUrl = `${forwardedProto}://${forwardedHost}${req.originalUrl}`;
+    const directUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+    const urlsToTry = [configuredUrl, proxiedUrl, directUrl];
+
+    const isValidSignature = urlsToTry.some((candidate) =>
+      this.twilioService.validateSignature(
+        signature,
+        candidate,
+        (req.body || {}) as Record<string, string>,
+      ),
     );
     this.logger.log(
-      `Signature check: ${isValidSignature ? 'valid' : 'invalid'} baseUrl=${url}`,
+      `Signature check: ${isValidSignature ? 'valid' : 'invalid'} configuredUrl=${configuredUrl} proxiedUrl=${proxiedUrl} directUrl=${directUrl}`,
     );
     if (!isValidSignature) {
       this.logger.warn(
