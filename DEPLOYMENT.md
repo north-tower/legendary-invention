@@ -8,6 +8,9 @@ Each project component now has its own `docker-compose.yml` and can be managed i
 ```bash
 cp .env.example .env
 # Edit .env: ensure FRONTEND_URL=http://localhost:7000
+# For WhatsApp bot, also set:
+# APP_BASE_URL, ANTHROPIC_API_KEY,
+# TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_NUMBER
 ```
 
 ### Launch
