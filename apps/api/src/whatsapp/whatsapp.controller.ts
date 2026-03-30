@@ -9,13 +9,11 @@ import {
   Logger,
   Post,
   Req,
-  ValidationPipe,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { SkipThrottle } from '@nestjs/throttler';
 import { Request } from 'express';
-import { TwilioWebhookDto } from './dto/twilio-webhook.dto';
 import { WhatsAppBotService } from './whatsapp-bot.service';
 import { TwilioService } from './twilio.service';
 
@@ -35,19 +33,16 @@ export class WhatsAppController {
   @Header('Content-Type', 'application/xml')
   @SkipThrottle()
   async handleWebhook(
-    @Body(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: false,
-        transform: true,
-      }),
-    )
-    body: TwilioWebhookDto,
+    @Body() body: Record<string, any>,
     @Headers('x-twilio-signature') signature: string,
     @Req() req: Request,
   ): Promise<string> {
+    const from = String(body?.From || '');
+    const message = String(body?.Body || '');
+    const messageSid = String(body?.MessageSid || 'n/a');
+
     this.logger.log(
-      `Incoming webhook From=${body?.From || 'unknown'} MessageSid=${body?.MessageSid || 'n/a'}`,
+      `Incoming webhook From=${from || 'unknown'} MessageSid=${messageSid}`,
     );
     const url = `${this.config.get<string>('app.baseUrl')}/api/v1/whatsapp/webhook`;
     const isValidSignature = this.twilioService.validateSignature(
@@ -65,20 +60,25 @@ export class WhatsAppController {
       throw new ForbiddenException('Invalid Twilio signature');
     }
 
-    this.botService.handleIncoming(body.From, body.Body).catch((err) => {
+    if (!from || !message) {
+      this.logger.warn(`Webhook missing required fields From/Body MessageSid=${messageSid}`);
+      return '<Response></Response>';
+    }
+
+    this.botService.handleIncoming(from, message).catch((err) => {
       this.logger.error(
-        `Async bot error From=${body?.From || 'unknown'} MessageSid=${body?.MessageSid || 'n/a'}`,
+        `Async bot error From=${from || 'unknown'} MessageSid=${messageSid}`,
         err?.stack || err,
       );
       this.twilioService
         .sendMessage(
-          body.From,
+          from,
           'Sorry, something went wrong. Please try again in a moment.',
         )
         .catch(() => undefined);
     });
     this.logger.log(
-      `Webhook accepted and bot dispatched From=${body?.From || 'unknown'} MessageSid=${body?.MessageSid || 'n/a'}`,
+      `Webhook accepted and bot dispatched From=${from || 'unknown'} MessageSid=${messageSid}`,
     );
 
     return '<Response></Response>';
