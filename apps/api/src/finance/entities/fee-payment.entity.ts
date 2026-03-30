@@ -36,11 +36,11 @@ export class FeePayment {
   payment_method: PaymentMethod;
 
   @ApiProperty({ required: false, uniqueItems: true })
-  @Column({ nullable: true, unique: true })
+  @Column({ type: 'varchar', nullable: true, unique: true })
   mpesa_receipt: string | null;
 
   @ApiProperty({ required: false })
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   mpesa_phone: string | null;
 
   @ApiProperty()
@@ -56,7 +56,7 @@ export class FeePayment {
   recorded_by: User;
 
   @ApiProperty({ required: false })
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   notes: string | null;
 
   @ApiProperty()
