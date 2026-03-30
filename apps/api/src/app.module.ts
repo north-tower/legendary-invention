@@ -13,6 +13,7 @@ import { FinanceModule } from './finance/finance.module';
 import { MpesaModule } from './mpesa/mpesa.module';
 import { CommsModule } from './comms/comms.module';
 import { MedicalModule } from './medical/medical.module';
+import { WhatsAppModule } from './whatsapp/whatsapp.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { MedicalModule } from './medical/medical.module';
     MpesaModule,
     CommsModule,
     MedicalModule,
+    WhatsAppModule,
   ],
   providers: [
     {

@@ -83,6 +83,34 @@ export class UsersService {
     }
   }
 
+  async findByPhone(phone: string): Promise<User | null> {
+    try {
+      const normalized = this.normalizePhone(phone);
+      return await this.userRepository.findOne({
+        where: { phone: normalized, role: UserRole.PARENT },
+      });
+    } catch (error) {
+      throw new InternalServerErrorException();
+    }
+  }
+
+  private normalizePhone(phone: string): string {
+    let normalized = phone.trim();
+    normalized = normalized.replace(/^whatsapp:/i, '');
+    normalized = normalized.replace(/\s+/g, '');
+
+    if (normalized.startsWith('07')) {
+      return `+254${normalized.slice(1)}`;
+    }
+    if (normalized.startsWith('2547')) {
+      return `+${normalized}`;
+    }
+    if (normalized.startsWith('+2547')) {
+      return normalized;
+    }
+    return normalized;
+  }
+
   async validatePassword(password: string, hash: string): Promise<boolean> {
     return await bcrypt.compare(password, hash);
   }

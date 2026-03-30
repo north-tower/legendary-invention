@@ -121,6 +121,18 @@ export class StudentsService {
     }
   }
 
+  async findByParentId(parentId: string): Promise<Student[]> {
+    try {
+      return await this.studentRepository.find({
+        where: { parent: { id: parentId }, is_active: true },
+        relations: ['parent'],
+        order: { full_name: 'ASC' },
+      });
+    } catch (error) {
+      throw new InternalServerErrorException();
+    }
+  }
+
   async update(id: string, updateStudentDto: Partial<CreateStudentDto>): Promise<Student> {
     try {
       const student = await this.findById(id);

@@ -2,6 +2,7 @@ import { registerAs } from '@nestjs/config';
 
 export default registerAs('app', () => ({
   port: parseInt(process.env.PORT || '6901', 10),
+  baseUrl: process.env.APP_BASE_URL || 'https://northtower.chickenkiller.com',
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
   jwt: {
     secret: process.env.JWT_SECRET,
@@ -23,5 +24,10 @@ export default registerAs('app', () => ({
   anthropic: {
     apiKey: process.env.ANTHROPIC_API_KEY,
     model: 'claude-sonnet-4-20250514',
+  },
+  twilio: {
+    accountSid: process.env.TWILIO_ACCOUNT_SID,
+    authToken: process.env.TWILIO_AUTH_TOKEN,
+    whatsappNumber: process.env.TWILIO_WHATSAPP_NUMBER,
   },
 }));
