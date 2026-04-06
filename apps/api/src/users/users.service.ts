@@ -94,6 +94,38 @@ export class UsersService {
     }
   }
 
+  async findOrCreateParentByPhone(
+    fullName: string,
+    phone: string,
+  ): Promise<User> {
+    try {
+      const normalizedPhone = this.normalizePhone(phone);
+      const existing = await this.userRepository.findOne({
+        where: { phone: normalizedPhone, role: UserRole.PARENT },
+      });
+      if (existing) return existing;
+
+      const safeName = (fullName || 'Parent User').trim();
+      const syntheticEmail = `${normalizedPhone.replace(/^\+/, '')}@parent.sychar.local`;
+      const password_hash = await bcrypt.hash(
+        `parent-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+        10,
+      );
+
+      const user = this.userRepository.create({
+        email: syntheticEmail,
+        full_name: safeName,
+        phone: normalizedPhone,
+        role: UserRole.PARENT,
+        password_hash,
+        is_active: true,
+      });
+      return await this.userRepository.save(user);
+    } catch (error) {
+      throw new InternalServerErrorException();
+    }
+  }
+
   private normalizePhone(phone: string): string {
     let normalized = phone.trim();
     normalized = normalized.replace(/^whatsapp:/i, '');

@@ -43,6 +43,16 @@ export class CreateStudentDto {
   @IsOptional()
   parentId?: string;
 
+  @ApiProperty({ required: false, description: 'Parent full name (used when parent is auto-created)' })
+  @IsString()
+  @IsOptional()
+  parent_name?: string;
+
+  @ApiProperty({ required: false, description: 'Parent phone in +2547 format (used to find/create parent)' })
+  @IsString()
+  @IsOptional()
+  parent_phone?: string;
+
   @ApiProperty({ example: 'A+', required: false })
   @IsString()
   @IsOptional()

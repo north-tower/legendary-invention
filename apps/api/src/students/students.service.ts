@@ -21,7 +21,8 @@ export class StudentsService {
 
   async create(createStudentDto: CreateStudentDto): Promise<Student> {
     try {
-      const { parentId, date_of_birth, ...studentData } = createStudentDto;
+      const { parentId, parent_name, parent_phone, date_of_birth, ...studentData } =
+        createStudentDto;
       const student = this.studentRepository.create({
         ...studentData,
         date_of_birth: date_of_birth ? new Date(date_of_birth) : undefined,
@@ -29,6 +30,11 @@ export class StudentsService {
 
       if (parentId) {
         student.parent = await this.usersService.findById(parentId);
+      } else if (parent_phone) {
+        student.parent = await this.usersService.findOrCreateParentByPhone(
+          parent_name || 'Parent User',
+          parent_phone,
+        );
       }
 
       return await this.studentRepository.save(student);
